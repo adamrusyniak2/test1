@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strategic Growth Calculator 2026-2028 - Clouds on Mars</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #0f0f0f;
+            color: #e0e0e0;
+        }
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            background: #1a1a1a;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+        h1 {
+            color: #ff6b35;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+        .subtitle {
+            color: #888;
+            margin-bottom: 30px;
+            font-size: 18px;
+        }
+        .current-status {
+            background: #252525;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border-left: 4px solid #ff6b35;
+        }
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin-top: 15px;
+        }
+        .status-item { text-align: center; }
+        .status-value { font-size: 32px; font-weight: bold; color: #ff6b35; }
+        .status-label { color: #aaa; font-size: 14px; margin-top: 5px; }
+        .advanced {
+            margin-top: 16px;
+            background: #1f1f1f;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 12px 16px;
+        }
+        .advanced h4 {
+            margin: 0 0 10px;
+            color: #ff6b35;
+            font-size: 14px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .adv-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+        }
+        .adv-item { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+        .adv-item input {
+            width: 100%;
+            padding: 10px;
+            background: #2c2c2c; color: #ff6b35;
+            border: 1px solid #555; border-radius: 4px;
+            text-align: center; font-weight: bold;
+        }
+        .strategy-tabs {
+            display: flex; gap: 10px; margin-bottom: 30px; justify-content: center;
+        }
+        .strategy-tab {
+            padding: 12px 24px; background: #252525;
+            border: 2px solid #333; border-radius: 8px; cursor: pointer;
+            transition: all 0.3s; font-weight: bold;
+        }
+        .strategy-tab.active { background: #ff6b35; border-color: #ff6b35; color: white; }
+        .strategy-content { display: none; }
+        .strategy-content.active { display: block; }
+        .year-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px; margin-bottom: 30px;
+        }
+        .year-card {
+            background: #252525; padding: 20px; border-radius: 8px; border-top: 3px solid #ff6b35;
+        }
+        .year-header {
+            font-size: 18px; font-weight: bold; color: #ff6b35; margin-bottom: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .year-number { font-size: 24px; }
+        .slider-group { margin-bottom: 15px; }
+        .slider-label { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+        .slider-value { color: #ff6b35; font-weight: bold; }
+        input[type="range"] {
+            width: 100%; height: 6px; background: #333; outline: none; border-radius: 3px; -webkit-appearance: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 18px; height: 18px; background: #ff6b35; cursor: pointer; border-radius: 50%;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 18px; height: 18px; background: #ff6b35; cursor: pointer; border-radius: 50%; border: none;
+        }
+        .year-metrics { margin-top: 15px; padding-top: 15px; border-top: 1px solid #333; font-size: 13px; }
+        .metric-item { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .metric-label { color: #888; }
+        .metric-value { color: #4CAF50; font-weight: bold; }
+        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
+        .chart-container { background: #252525; padding: 25px; border-radius: 8px; height: 400px; }
+        .full-width-chart { grid-column: 1 / -1; height: 500px; }
+        .summary-section { background: #252525; padding: 25px; border-radius: 8px; margin-bottom: 30px; }
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; margin-top: 20px; }
+        .summary-card { text-align: center; padding: 20px; background: #1a1a1a; border-radius: 8px; }
+        .summary-title { color: #888; font-size: 14px; margin-bottom: 10px; }
+        .summary-value { font-size: 36px; font-weight: bold; color: #ff6b35; margin-bottom: 5px; }
+        .summary-detail { color: #aaa; font-size: 12px; }
+        .comparison-table { background: #252525; padding: 25px; border-radius: 8px; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #333; }
+        th { color: #ff6b35; font-weight: bold; font-size: 14px; }
+        td { font-size: 14px; }
+        tr:last-child td { border-bottom: none; }
+        .positive { color: #4CAF50; } .negative { color: #e74c3c; } .neutral { color: #f39c12; }
+        button:hover { background: #e55a2b !important; transform: translateY(-1px); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Strategic Growth Calculator 2026-2028</h1>
+        <p class="subtitle">3-Year IT Company Growth Model - Plan your strategic development</p>
+        
+        <div class="current-status">
+            <h3 style="margin-top: 0; color: #ff6b35;">Current IT Company Baseline (2025)</h3>
+            <div class="status-grid">
+                <div class="status-item">
+                    <div class="status-label">Annual Revenue (PLN M)</div>
+                    <input type="number" id="base-revenue" value="37" min="1" max="200" step="0.001"
+                           style="width: 120px; padding: 10px; background: #2c2c2c; color: #ff6b35; border: 1px solid #555; border-radius: 4px; text-align: center; font-size: 18px; font-weight: bold;">
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Tech Team Size</div>
+                    <input type="number" id="base-team" value="120" min="10" max="1000" 
+                           style="width: 120px; padding: 10px; background: #2c2c2c; color: #ff6b35; border: 1px solid #555; border-radius: 4px; text-align: center; font-size: 18px; font-weight: bold;">
+                </div>
+                <div class="status-item">
+                    <div class="status-label">EBITDA Margin (display)</div>
+                    <input type="number" id="base-ebitda" value="15" min="0" max="40" step="0.5"
+                           style="width: 120px; padding: 10px; background: #2c2c2c; color: #ff6b35; border: 1px solid #555; border-radius: 4px; text-align: center; font-size: 18px; font-weight: bold;">
+                </div>
+            </div>
+            
+            <div style="margin: 20px 0; padding: 15px; background: rgba(255, 107, 53, 0.1); border-radius: 8px; border-left: 4px solid #ff6b35;">
+                <div style="font-weight: bold; color: #ff6b35; margin-bottom: 15px; font-size: 16px;">💼 Team Structure</div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <div class="slider-group">
+                        <div class="slider-label">
+                            <span>Business Unit People %</span>
+                            <span class="slider-value" id="base-billable-val">70%</span>
+                        </div>
+                        <input type="range" id="base-billable" min="50" max="95" value="70" step="1">
+                    </div>
+                    <div class="slider-group">
+                        <div class="slider-label">
+                            <span>BU Billable Hours %</span>
+                            <span class="slider-value" id="base-hours-val">70%</span>
+                        </div>
+                        <input type="range" id="base-hours" min="50" max="90" value="70" step="1">
+                    </div>
+                    <div class="slider-group">
+                        <div class="slider-label">
+                            <span>BU Billable Rate (PLN)</span>
+                            <span class="slider-value" id="base-hourly-val">185</span>
+                        </div>
+                        <input type="range" id="base-hourly" min="100" max="400" value="185" step="5">
+                    </div>
+                    <div class="slider-group">
+                        <div class="slider-label">
+                            <span>Non-BU Rate (PLN)</span>
+                            <span class="slider-value" id="base-nonbillable-val">140</span>
+                        </div>
+                        <input type="range" id="base-nonbillable" min="80" max="300" value="140" step="5">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced costs & opex -->
+            <div class="advanced">
+                <h4>⚙️ Advanced (Costs & OPEX)</h4>
+                <div class="adv-grid">
+                    <div class="adv-item">
+                        <label>BU cost / hour (PLN)</label>
+                        <input type="number" id="adv-cost-bu" value="140" step="5">
+                    </div>
+                    <div class="adv-item">
+                        <label>Non‑BU cost / hour (PLN)</label>
+                        <input type="number" id="adv-cost-nonbu" value="100" step="5">
+                    </div>
+                    <div class="adv-item">
+                        <label>Fixed OPEX / year (PLN)</label>
+                        <input type="number" id="adv-opex" value="1500000" step="50000">
+                    </div>
+                    <div class="adv-item">
+                        <label>Realization Y1 (0.8–1.2)</label>
+                        <input type="number" id="adv-real-1" value="1.00" min="0.5" max="1.5" step="0.01">
+                    </div>
+                    <div class="adv-item">
+                        <label>Realization Y2 (0.8–1.2)</label>
+                        <input type="number" id="adv-real-2" value="1.00" min="0.5" max="1.5" step="0.01">
+                    </div>
+                    <div class="adv-item">
+                        <label>Realization Y3 (0.8–1.2)</label>
+                        <input type="number" id="adv-real-3" value="1.00" min="0.5" max="1.5" step="0.01">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="team-breakdown" style="margin: 15px 0; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 8px; border-left: 4px solid #ff6b35;">
+                <div style="font-weight: bold; color: #ff6b35; margin-bottom: 10px;">Current Team Structure:</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 14px;">
+                    <div>
+                        <span style="color: #aaa;">💼 Business Unit People:</span>
+                        <span style="color: #fff; font-weight: bold;" id="base-billable-team">84</span>
+                        <span style="color: #ff6b35; font-size: 12px;" id="base-billable-percent">(70%)</span>
+                    </div>
+                    <div>
+                        <span style="color: #aaa;">🏢 Non-BU People:</span>
+                        <span style="color: #fff; font-weight: bold;" id="base-nonbillable-team">36</span>
+                        <span style="color: #9e9e9e; font-size: 12px;" id="base-nonbillable-percent">(30%)</span>
+                    </div>
+                </div>
+                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 13px;">
+                    <div style="font-weight: bold; color: #ff6b35; margin-bottom: 8px;">Business Unit People Hours:</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                        <div>
+                            <span style="color: #aaa;">• Billable Hours:</span>
+                            <span style="color: #4CAF50;" id="base-billable-hours-calc">70% (1,478h)</span>
+                        </div>
+                        <div>
+                            <span style="color: #aaa;">• Non-Billable Hours:</span>
+                            <span style="color: #9e9e9e;" id="base-nonbillable-hours-calc">30% (634h)</span>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.05);">
+                        <div>
+                            <span style="color: #aaa;">Current EBITDA:</span>
+                            <span style="color: #ff6b35;" id="base-ebitda-calc">PLN 5.6M</span>
+                        </div>
+                        <div>
+                            <span style="color: #aaa;">Revenue/Person:</span>
+                            <span style="color: #ff6b35;" id="base-productivity">PLN 308K</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 15px;">
+                <button onclick="updateBaseline()" style="background: #ff6b35; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 14px; font-weight: bold; transition: background 0.3s;">
+                    Recalculate
+                </button>
+            </div>
+        </div>
+        
+        <div class="strategy-tabs">
+            <div class="strategy-tab active" onclick="switchStrategy('organic')">Organic Growth</div>
+            <div class="strategy-tab" onclick="switchStrategy('accelerated')">Accelerated Growth</div>
+            <div class="strategy-tab" onclick="switchStrategy('aggressive')">Aggressive Expansion</div>
+            <div class="strategy-tab" onclick="switchStrategy('custom')">Custom Strategy</div>
+        </div>
+        
+        <div id="organic" class="strategy-content active">
+            <h3 style="color: #4CAF50;">Organic Growth Strategy - Sustainable Tech Development</h3>
+            <p style="color: #888; margin-bottom: 20px;">Focus on profitability and steady growth through existing capabilities and technical excellence</p>
+            <div class="year-grid">
+                <!-- year cards are injected for other strategies, Organic is static text only -->
+            </div>
+        </div>
+        <div id="accelerated" class="strategy-content"></div>
+        <div id="aggressive" class="strategy-content"></div>
+        <div id="custom" class="strategy-content"></div>
+        
+        <div class="charts-grid">
+            <div class="chart-container full-width-chart">
+                <canvas id="revenueChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="ebitdaChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="teamChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="hourlyChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="summary-section">
+            <h3 style="color: #ff6b35; margin-top: 0;">Strategy Summary</h3>
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <div class="summary-title">2028 Revenue</div>
+                    <div class="summary-value" id="summary-revenue">—</div>
+                    <div class="summary-detail" id="summary-cagr">—</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-title">2028 EBITDA</div>
+                    <div class="summary-value" id="summary-ebitda">—</div>
+                    <div class="summary-detail" id="summary-ebitda-margin">—</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-title">2028 Tech Team</div>
+                    <div class="summary-value" id="summary-team">—</div>
+                    <div class="summary-detail" id="summary-hires">—</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-title">Revenue per Developer</div>
+                    <div class="summary-value" id="summary-productivity">—</div>
+                    <div class="summary-detail" id="summary-productivity-gain">—</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-title">Total EBITDA 2025–28</div>
+                    <div class="summary-value" id="summary-total-ebitda">—</div>
+                    <div class="summary-detail">Cumulative profit</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-title">Investment Needed</div>
+                    <div class="summary-value" id="summary-investment">—</div>
+                    <div class="summary-detail" id="summary-investment-detail">—</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-title">2028 Revenue/Hour</div>
+                    <div class="summary-value" id="summary-hourly-rate">—</div>
+                    <div class="summary-detail" id="summary-utilization">—</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="comparison-table">
+            <h3 style="color: #ff6b35; margin-top: 0;">Strategy Comparison</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Organic</th>
+                        <th>Accelerated</th>
+                        <th>Aggressive</th>
+                        <th>Custom</th>
+                    </tr>
+                </thead>
+                <tbody id="comparison-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+<script>
+// ===== STATE =====
+let charts = { revenue:null, ebitda:null, team:null, hourly:null };
+
+const strategies = {
+  organic: { name:'Organic', color:'#4CAF50',
+    defaults:{ revenue:[20,25,25], ebitda:[17,19,21], team:[15,18,15],
+      billableRatio:[75,77,80], hours:[70,72,75], hourlyRate:[193,203,217], nonBillableRate:[150,160,170] } },
+  accelerated: { name:'Accelerated', color:'#3498db',
+    defaults:{ revenue:[30,35,30], ebitda:[12,15,18], team:[20,25,20],
+      billableRatio:[72,75,77], hours:[72,75,77], hourlyRate:[220,240,260], nonBillableRate:[170,180,195] } },
+  aggressive: { name:'Aggressive', color:'#e74c3c',
+    defaults:{ revenue:[40,45,35], ebitda:[5,10,15], team:[30,35,25],
+      billableRatio:[70,72,75], hours:[75,77,80], hourlyRate:[250,280,320], nonBillableRate:[190,210,240] } },
+  custom: { name:'Custom', color:'#f39c12',
+    defaults:{ revenue:[25,30,28], ebitda:[15,17,19], team:[18,20,18],
+      billableRatio:[75,77,80], hours:[70,72,75], hourlyRate:[200,220,240], nonBillableRate:[155,165,180] } }
+};
+
+let currentStrategy = 'organic';
+let baseRevenue = 37, baseTeam = 120, baseEbitda = 15;
+const WORKING_HOURS_PER_YEAR = 22*12*8; // 2112
+
+// Costs/OPEX/Realization
+let costRateBU = 140, costRateNonBU = 100, fixedOpex = 1_500_000;
+let realization = [1.00, 1.00, 1.00]; // Y1..Y3
+
+// ===== UI Build for non-organic strategies =====
+function initializeStrategy(strategy){
+  const years=[2026,2027,2028];
+  const container=document.getElementById(strategy);
+  if(!container) return;
+  if(strategy!=='organic'){
+    let html = `<h3 style="color:${strategies[strategy].color};">${strategies[strategy].name} Growth Strategy</h3>
+    <p style="color:#888; margin-bottom:20px;">Adjust parameters to model your growth trajectory</p>
+    <div class="year-grid">`;
+    years.forEach((year, idx)=>{
+      html += `<div class="year-card">
+        <div class="year-header"><span>${year}</span><span class="year-number">Year ${idx+1}</span></div>
+        <div class="slider-group">
+          <div class="slider-label"><span>Revenue Growth</span><span class="slider-value" id="${strategy}-rev-${year}-val">${strategies[strategy].defaults.revenue[idx]}%</span></div>
+          <input type="range" id="${strategy}-rev-${year}" min="0" max="60" value="${strategies[strategy].defaults.revenue[idx]}" step="5">
+        </div>
+        <div class="slider-group">
+          <div class="slider-label"><span>EBITDA Margin (display)</span><span class="slider-value" id="${strategy}-ebitda-${year}-val">${strategies[strategy].defaults.ebitda[idx]}%</span></div>
+          <input type="range" id="${strategy}-ebitda-${year}" min="-10" max="30" value="${strategies[strategy].defaults.ebitda[idx]}" step="1">
+        </div>
+        <div class="slider-group">
+          <div class="slider-label"><span>Team Growth</span><span class="slider-value" id="${strategy}-team-${year}-val">${strategies[strategy].defaults.team[idx]}%</span></div>
+          <input type="range" id="${strategy}-team-${year}" min="0" max="50" value="${strategies[strategy].defaults.team[idx]}" step="5">
+        </div>
+        <div style="margin: 15px 0; padding: 8px; background: rgba(76, 175, 80, 0.1); border-radius: 5px; border-left: 3px solid ${strategies[strategy].color};">
+          <div style="font-weight: bold; color: ${strategies[strategy].color}; margin-bottom: 10px; font-size: 14px;">💼 Business Unit People</div>
+          <div class="slider-group">
+            <div class="slider-label"><span>BU People %</span><span class="slider-value" id="${strategy}-billable-${year}-val">${strategies[strategy].defaults.billableRatio[idx]}%</span></div>
+            <input type="range" id="${strategy}-billable-${year}" min="50" max="95" value="${strategies[strategy].defaults.billableRatio[idx]}" step="1">
+          </div>
+          <div class="slider-group">
+            <div class="slider-label"><span>BU Billable Hours %</span><span class="slider-value" id="${strategy}-hours-${year}-val">${strategies[strategy].defaults.hours[idx]}%</span></div>
+            <input type="range" id="${strategy}-hours-${year}" min="50" max="90" value="${strategies[strategy].defaults.hours[idx]}" step="1">
+          </div>
+          <div class="slider-group">
+            <div class="slider-label"><span>BU Billable Rate (PLN)</span><span class="slider-value" id="${strategy}-hourly-${year}-val">${strategies[strategy].defaults.hourlyRate[idx]}</span></div>
+            <input type="range" id="${strategy}-hourly-${year}" min="100" max="400" value="${strategies[strategy].defaults.hourlyRate[idx]}" step="5">
+          </div>
+        </div>
+        <div class="year-metrics">
+          <div class="metric-item"><span class="metric-label">Revenue</span><span class="metric-value" id="${strategy}-rev-calc-${year}">PLN 0M</span></div>
+          <div class="metric-item"><span class="metric-label">EBITDA</span><span class="metric-value" id="${strategy}-ebitda-calc-${year}">PLN 0M</span></div>
+          <div class="metric-item"><span class="metric-label">Tech Team</span><span class="metric-value" id="${strategy}-team-calc-${year}">0</span></div>
+          <div class="metric-item"><span class="metric-label">Revenue/Hour</span><span class="metric-value" id="${strategy}-hourly-calc-${year}">PLN 0</span></div>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+    container.innerHTML = html;
+    setTimeout(()=>attachSliderListeners(), 10);
+  }
+}
+
+// ===== Switch strategy =====
+function switchStrategy(strategy){
+  document.querySelectorAll('.strategy-tab').forEach(t=>t.classList.remove('active'));
+  const order = ['organic','accelerated','aggressive','custom'];
+  const idx = order.indexOf(strategy);
+  if (idx>=0) document.querySelector(`.strategy-tab:nth-child(${idx+1})`)?.classList.add('active');
+  document.querySelectorAll('.strategy-content').forEach(c=>c.classList.remove('active'));
+  document.getElementById(strategy)?.classList.add('active');
+  currentStrategy = strategy;
+  setTimeout(()=>{ attachSliderListeners(); updateCharts(); }, 50);
+}
+
+// ===== Baseline & Advanced =====
+function readAdvanced(){
+  costRateBU = parseFloat(document.getElementById('adv-cost-bu')?.value) || 140;
+  costRateNonBU = parseFloat(document.getElementById('adv-cost-nonbu')?.value) || 100;
+  fixedOpex = parseFloat(document.getElementById('adv-opex')?.value) || 1_500_000;
+  realization = [
+    parseFloat(document.getElementById('adv-real-1')?.value) || 1.00,
+    parseFloat(document.getElementById('adv-real-2')?.value) || 1.00,
+    parseFloat(document.getElementById('adv-real-3')?.value) || 1.00
+  ];
+}
+
+function updateBaseline(){
+  const revenueInput = document.getElementById('base-revenue');
+  const teamInput = document.getElementById('base-team');
+  const ebitdaInput = document.getElementById('base-ebitda');
+  const billableRatioInput = document.getElementById('base-billable');
+  const hoursInput = document.getElementById('base-hours');
+  const hourlyInput = document.getElementById('base-hourly');
+
+  baseRevenue = parseFloat(revenueInput.value) || 37;
+  baseTeam = parseInt(teamInput.value) || 120;
+  baseEbitda = parseFloat(ebitdaInput.value) || 15;
+
+  const billableRatio = parseFloat(billableRatioInput.value)/100;
+  const hoursPercentage = parseFloat(hoursInput.value);
+  const billableRate = parseFloat(hourlyInput.value);
+
+  readAdvanced();
+
+  const billableTeamSize = Math.round(baseTeam * billableRatio);
+  const nonBillableTeamSize = baseTeam - billableTeamSize;
+  const totalWorkingHours = WORKING_HOURS_PER_YEAR;
+  const billableHoursPerYear = Math.round(totalWorkingHours * (hoursPercentage/100));
+
+  // Baseline revenue stays as input (PLN M), baseline EBITDA computed from costs
+  const revenuePLN = baseRevenue * 1_000_000;
+  const deliveryCost = billableTeamSize * totalWorkingHours * costRateBU;
+  const nonDeliveryCost = nonBillableTeamSize * totalWorkingHours * costRateNonBU;
+  const ebitdaPLN = revenuePLN - deliveryCost - nonDeliveryCost - fixedOpex;
+
+  document.getElementById('base-billable-team').textContent = billableTeamSize;
+  document.getElementById('base-nonbillable-team').textContent = nonBillableTeamSize;
+  document.getElementById('base-billable-percent').textContent = `(${Math.round(billableRatio*100)}%)`;
+  document.getElementById('base-nonbillable-percent').textContent = `(${Math.round((1-billableRatio)*100)}%)`;
+  document.getElementById('base-billable-hours-calc').textContent = `${Math.round(hoursPercentage)}% (${billableHoursPerYear.toLocaleString()}h)`;
+  document.getElementById('base-nonbillable-hours-calc').textContent = `${100-Math.round(hoursPercentage)}% (${(totalWorkingHours-billableHoursPerYear).toLocaleString()}h)`;
+  document.getElementById('base-ebitda-calc').textContent = `PLN ${(ebitdaPLN/1_000_000).toFixed(1)}M`;
+  document.getElementById('base-productivity').textContent = `PLN ${Math.round(baseRevenue*1000/baseTeam)}K`;
+
+  updateCharts();
+}
+
+// ===== Core calculations =====
+function calculateMetrics(strategy){
+  const years=[2025,2026,2027,2028];
+  const data = { years, revenue:[], ebitda:[], ebitdaMargin:[], team:[], productivity:[], hours:[], hourlyRate:[] };
+
+  const billablePct0 = parseFloat(document.getElementById('base-billable').value)/100;
+  const utilPct0 = parseFloat(document.getElementById('base-hours').value);
+
+  // Year 0: baseline from inputs + costs
+  let teamPrev = baseTeam;
+  let billableTeam = Math.round(teamPrev * billablePct0);
+  let nonBillableTeam = teamPrev - billableTeam;
+  let billableHoursPerFTE = Math.round(WORKING_HOURS_PER_YEAR * (utilPct0/100));
+
+  const rev0_M = baseRevenue;
+  const rev0_PLN = rev0_M * 1_000_000;
+  const cost0_delivery = billableTeam * WORKING_HOURS_PER_YEAR * costRateBU;
+  const cost0_non = nonBillableTeam * WORKING_HOURS_PER_YEAR * costRateNonBU;
+  const ebitda0_PLN = rev0_PLN - cost0_delivery - cost0_non - fixedOpex;
+  const ebitda0_M = ebitda0_PLN/1_000_000;
+  const margin0 = rev0_PLN>0 ? (ebitda0_PLN/rev0_PLN)*100 : 0;
+  const revPerHour0 = (billableTeam*billableHoursPerFTE)>0 ? Math.round(rev0_PLN/(billableTeam*billableHoursPerFTE)) : 0;
+
+  data.revenue.push(rev0_M);
+  data.ebitda.push(ebitda0_M);
+  data.ebitdaMargin.push(Math.round(margin0*10)/10);
+  data.team.push(teamPrev);
+  data.productivity.push(rev0_M*1000/teamPrev);
+  data.hours.push(billableHoursPerFTE);
+  data.hourlyRate.push(revPerHour0);
+
+  // Future years
+  for(let i=1;i<years.length;i++){
+    const year = years[i];
+    const d = strategies[strategy].defaults;
+    const revGrowth = parseFloat(document.getElementById(`${strategy}-rev-${year}`)?.value ?? d.revenue[i-1]) / 100;
+    const teamGrowth = parseFloat(document.getElementById(`${strategy}-team-${year}`)?.value ?? d.team[i-1]) / 100;
+    const billableRatio = (parseFloat(document.getElementById(`${strategy}-billable-${year}`)?.value ?? (d.billableRatio?.[i-1] ?? 75)))/100;
+    const hoursPercentage = parseFloat(document.getElementById(`${strategy}-hours-${year}`)?.value ?? (d.hours?.[i-1] ?? 70));
+    const listRate = parseFloat(document.getElementById(`${strategy}-hourly-${year}`)?.value ?? (d.hourlyRate?.[i-1] ?? 200));
+
+    const newTeam = Math.round(teamPrev * (1 + teamGrowth));
+    billableTeam = Math.round(newTeam * billableRatio);
+    nonBillableTeam = newTeam - billableTeam;
+
+    billableHoursPerFTE = Math.round(WORKING_HOURS_PER_YEAR * (hoursPercentage/100));
+    const billableHoursTotal = billableTeam * billableHoursPerFTE;
+
+    // Effective sales rate adjusted by realization and revenue growth
+    const effRate = listRate * (realization[i-1] ?? 1.00) * (1 + revGrowth);
+
+    const revenue_PLN = billableHoursTotal * effRate; // Non-BU does NOT generate revenue
+    const revenue_M = revenue_PLN / 1_000_000;
+
+    const costDelivery = billableTeam * WORKING_HOURS_PER_YEAR * costRateBU;
+    const costNon = nonBillableTeam * WORKING_HOURS_PER_YEAR * costRateNonBU;
+
+    const ebitda_PLN = revenue_PLN - costDelivery - costNon - fixedOpex;
+    const ebitda_M = ebitda_PLN / 1_000_000;
+    const marginPct = revenue_PLN>0 ? (ebitda_PLN/revenue_PLN)*100 : 0;
+    const revPerHour = billableHoursTotal>0 ? Math.round(revenue_PLN/billableHoursTotal) : 0;
+
+    data.revenue.push(revenue_M);
+    data.ebitda.push(ebitda_M);
+    data.ebitdaMargin.push(Math.round(marginPct*10)/10);
+    data.team.push(newTeam);
+    data.productivity.push(revenue_M*1000/newTeam);
+    data.hours.push(billableHoursPerFTE);
+    data.hourlyRate.push(revPerHour);
+
+    // Update mini metrics if exist in DOM for current strategy
+    if (strategy===currentStrategy){
+      const rE = document.getElementById(`${strategy}-rev-calc-${year}`);
+      const eE = document.getElementById(`${strategy}-ebitda-calc-${year}`);
+      const tE = document.getElementById(`${strategy}-team-calc-${year}`);
+      const hE = document.getElementById(`${strategy}-hourly-calc-${year}`);
+      if (rE) rE.textContent = `PLN ${Math.round(revenue_M)}M`;
+      if (eE) eE.textContent = `PLN ${Math.round(ebitda_M*10)/10}M`;
+      if (tE) tE.textContent = newTeam;
+      if (hE) hE.textContent = `PLN ${revPerHour}`;
+    }
+    teamPrev = newTeam;
+  }
+
+  return data;
+}
+
+// ===== Charts =====
+function updateCharts(){
+  const data = calculateMetrics(currentStrategy);
+
+  const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+  if (charts.revenue) charts.revenue.destroy();
+  charts.revenue = new Chart(revenueCtx, {
+    type:'line',
+    data:{ labels:data.years, datasets:[{ label:'Revenue (PLN M)', data:data.revenue,
+      borderColor: strategies[currentStrategy].color, backgroundColor: strategies[currentStrategy].color+'33', borderWidth:3, tension:.4, fill:true }]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ title:{display:true,text:'Revenue Growth Trajectory',color:'#ff6b35',font:{size:18}}, legend:{display:false}},
+      scales:{ y:{beginAtZero:true,grid:{color:'rgba(255,255,255,0.1)'},ticks:{color:'#e0e0e0',callback:v=>`PLN ${v}M`}},
+               x:{grid:{color:'rgba(255,255,255,0.1)'},ticks:{color:'#e0e0e0'}} } }
+  });
+
+  const ebitdaCtx = document.getElementById('ebitdaChart').getContext('2d');
+  if (charts.ebitda) charts.ebitda.destroy();
+  charts.ebitda = new Chart(ebitdaCtx, {
+    type:'bar',
+    data:{ labels:data.years, datasets:[
+      { label:'EBITDA (PLN M)', data:data.ebitda, backgroundColor:'#4CAF50', borderColor:'#4CAF50', borderWidth:2 },
+      { label:'EBITDA Margin %', data:data.ebitdaMargin, type:'line', borderColor:'#ff6b35', backgroundColor:'transparent', borderWidth:3, yAxisID:'y1', tension:.4 }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ title:{display:true,text:'EBITDA & Margin Evolution',color:'#ff6b35',font:{size:16}}},
+      scales:{
+        y:{beginAtZero:true,position:'left',grid:{color:'rgba(255,255,255,0.1)'},ticks:{color:'#e0e0e0',callback:v=>`PLN ${v}M`}},
+        y1:{beginAtZero:true,position:'right',grid:{drawOnChartArea:false},ticks:{color:'#e0e0e0',callback:v=>`${v}%`}},
+        x:{grid:{color:'rgba(255,255,255,0.1)'},ticks:{color:'#e0e0e0'}}
+      }}
+  });
+
+  const teamCtx = document.getElementById('teamChart').getContext('2d');
+  if (charts.team) charts.team.destroy();
+  charts.team = new Chart(teamCtx, {
+    type:'line',
+    data:{ labels:data.years, datasets:[
+      { label:'Tech Team Size', data:data.team, borderColor:'#3498db', backgroundColor:'#3498db33', borderWidth:3, tension:.4, yAxisID:'y' },
+      { label:'Revenue per Developer (PLN K)', data:data.productivity, borderColor:'#f39c12', backgroundColor:'transparent', borderWidth:3, borderDash:[5,5], tension:.4, yAxisID:'y1' }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ title:{display:true,text:'Tech Team Growth & Developer Productivity',color:'#ff6b35',font:{size:16}}},
+      scales:{
+        y:{beginAtZero:true,position:'left',grid:{color:'rgba(255,255,255,0.1)'},ticks:{color:'#e0e0e0'}},
+        y1:{beginAtZero:true,position:'right',grid:{drawOnChartArea:false},ticks:{color:'#e0e0e0',callback:v=>`PLN ${Math.round(v)}K`}},
+        x:{grid:{color:'rgba(255,255,255,0.1)'},ticks:{color:'#e0e0e0'}}
+      }}
+  });
+
+  const hourlyCtx = document.getElementById('hourlyChart').getContext('2d');
+  if (charts.hourly) charts.hourly.destroy();
+  charts.hourly = new Chart(hourlyCtx, {
+    type:'line',
+    data:{ labels:data.years, datasets:[
+      { label:'Revenue/Hour (PLN)', data:data.hourlyRate, borderColor:'#ff6b35', backgroundColor:'#ff6b3533', borderWidth:3, tension:.4, yAxisID:'y' },
+      { label:'Utilization %', data:data.hours.map(h=>Math.round((h/WORKING_HOURS_PER_YEAR)*100)), borderColor:'#9b59b6', backgroundColor:'transparent', borderWidth:3, borderDash:[5,5], tension:.4, yAxisID:'y1' }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ title:{display:true,text:'Hourly Rate & Utilization',color:'#ff6b35',font:{size:16}}},
+      scales:{
+        y:{beginAtZero:true,position:'left',grid:{color:'rgba(255,255,255,0.1)'},ticks:{color:'#e0e0e0',callback:v=>`PLN ${v}`}},
+        y1:{beginAtZero:true,position:'right',max:100,grid:{drawOnChartArea:false},ticks:{color:'#e0e0e0',callback:v=>`${v}%`}},
+        x:{grid:{color:'rgba(255,255,255,0.1)'},ticks:{color:'#e0e0e0'}}
+      }}
+  });
+
+  updateSummary(data);
+  callUpdateComparison();
+}
+
+// ===== Summary & Comparison =====
+function updateSummary(data){
+  const finalRevenue = data.revenue.at(-1);
+  const finalEbitda = data.ebitda.at(-1);
+  const finalEbitdaMargin = data.ebitdaMargin.at(-1);
+  const finalTeam = data.team.at(-1);
+  const finalProductivity = data.productivity.at(-1);
+  const finalHourlyRate = data.hourlyRate.at(-1);
+  const finalHours = data.hours.at(-1);
+
+  const cagr = Math.pow(finalRevenue / baseRevenue, 1/3) - 1; // 3 periods (2025->2028)
+  const totalEbitda = data.ebitda.reduce((a,b)=>a+b,0);
+  const productivityGain = (finalProductivity - data.productivity[0]) / data.productivity[0];
+
+  document.getElementById('summary-revenue').textContent = `PLN ${Math.round(finalRevenue)}M`;
+  document.getElementById('summary-cagr').textContent = `${Math.round(cagr*100)}% CAGR`;
+  document.getElementById('summary-ebitda').textContent = `PLN ${Math.round(finalEbitda*10)/10}M`;
+  document.getElementById('summary-ebitda-margin').textContent = `${Math.round(finalEbitdaMargin)}% margin`;
+  document.getElementById('summary-team').textContent = finalTeam;
+  document.getElementById('summary-hires').textContent = `+${finalTeam - baseTeam} hires`;
+  document.getElementById('summary-productivity').textContent = `PLN ${Math.round(finalProductivity)}K`;
+  document.getElementById('summary-productivity-gain').textContent = `+${Math.round(productivityGain*100)}% vs today`;
+  document.getElementById('summary-total-ebitda').textContent = `PLN ${Math.round(totalEbitda)}M`;
+
+  const utilizationPercentage = Math.round((finalHours/WORKING_HOURS_PER_YEAR)*100);
+  document.getElementById('summary-hourly-rate').textContent = `PLN ${Math.round(finalHourlyRate)}`;
+  document.getElementById('summary-utilization').textContent = `${utilizationPercentage}% utilization`;
+
+  // simple funding signal
+  let investment='High', detail='Significant funding needed';
+  if (finalEbitdaMargin >= 20 && data.ebitda.every(e=>e>0)) { investment='Low'; detail='Self-funded growth'; }
+  else if (finalEbitdaMargin >= 15 && data.ebitda.filter(e=>e<0).length <= 1) { investment='Moderate'; detail='Some external funding'; }
+  document.getElementById('summary-investment').textContent = investment;
+  document.getElementById('summary-investment-detail').textContent = detail;
+}
+
+window.updateComparison = function(){
+  try{
+    const comparisonData = {};
+    Object.keys(strategies).forEach(strategy=>{
+      const d = calculateMetrics(strategy);
+      const finalRevenue = d.revenue.at(-1);
+      const finalEbitda = d.ebitda.at(-1);
+      const finalEbitdaMargin = d.ebitdaMargin.at(-1);
+      const finalTeam = d.team.at(-1);
+      const finalProductivity = d.productivity.at(-1);
+      const cagr = Math.pow(finalRevenue / baseRevenue, 1/3) - 1;
+      const totalEbitda = d.ebitda.reduce((a,b)=>a+b,0);
+      let yearTo100M = 'Not reached';
+      for (let i=0;i<d.revenue.length;i++){ if (d.revenue[i] >= 100){ yearTo100M = d.years[i]; break; } }
+      comparisonData[strategy] = {
+        finalRevenue: Math.round(finalRevenue), cagr: Math.round(cagr*100),
+        finalEbitda: Math.round(finalEbitda*10)/10, finalEbitdaMargin: Math.round(finalEbitdaMargin),
+        totalEbitda: Math.round(totalEbitda), finalTeam, teamGrowth: finalTeam - baseTeam,
+        finalProductivity: Math.round(finalProductivity), productivityGain: Math.round(((finalProductivity - d.productivity[0]) / d.productivity[0]) * 100),
+        yearTo100M, minEbitdaMargin: Math.round(Math.min(...d.ebitdaMargin.slice(1))),
+        avgEbitdaMargin: Math.round(d.ebitdaMargin.slice(1).reduce((a,b)=>a+b,0) / (d.ebitdaMargin.length-1))
+      };
+    });
+
+    const tbody = document.getElementById('comparison-body');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    const rows = [
+      { label:'2028 Revenue', getValue:d=>`PLN ${d.finalRevenue}M`, highlight:'finalRevenue' },
+      { label:'Revenue CAGR', getValue:d=>`${d.cagr}%`, highlight:'cagr' },
+      { label:'Year to PLN 100M', getValue:d=>d.yearTo100M, highlight:'yearTo100M', reverse:true },
+      { label:'2028 EBITDA', getValue:d=>`PLN ${d.finalEbitda}M`, highlight:'finalEbitda' },
+      { label:'2028 EBITDA Margin', getValue:d=>`${d.finalEbitdaMargin}%`, highlight:'finalEbitdaMargin' },
+      { label:'Total EBITDA (2025–28)', getValue:d=>`PLN ${d.totalEbitda}M`, highlight:'totalEbitda' },
+      { label:'Min EBITDA Margin', getValue:d=>`${d.minEbitdaMargin}%`, highlight:'minEbitdaMargin' },
+      { label:'Avg EBITDA Margin', getValue:d=>`${d.avgEbitdaMargin}%`, highlight:'avgEbitdaMargin' },
+      { label:'2028 Team Size', getValue:d=>d.finalTeam, highlight:'finalTeam', reverse:true },
+      { label:'Total Hires', getValue:d=>`+${d.teamGrowth}`, highlight:'teamGrowth', reverse:true },
+      { label:'Revenue/Person', getValue:d=>`PLN ${d.finalProductivity}K`, highlight:'finalProductivity' },
+      { label:'Productivity Gain', getValue:d=>`+${d.productivityGain}%`, highlight:'productivityGain' },
+      { label:'Risk Level', getValue:d=>(d.minEbitdaMargin<5?'High':d.minEbitdaMargin<15?'Medium':'Low'), custom:true },
+      { label:'Funding Needed', getValue:d=>(d.minEbitdaMargin<0?'Significant':d.minEbitdaMargin<10?'Moderate':'Minimal'), custom:true }
+    ];
+
+    rows.forEach(row=>{
+      const tr = document.createElement('tr');
+      const labelTd = document.createElement('td');
+      labelTd.style.fontWeight='bold'; labelTd.style.color='#aaa'; labelTd.textContent=row.label;
+      tr.appendChild(labelTd);
+
+      let bestValue, worstValue;
+      if (!row.custom && row.highlight){
+        const values = Object.values(comparisonData).map(d=>d[row.highlight]);
+        if (row.highlight==='yearTo100M'){
+          const numericValues = values.filter(v=>v!=='Not reached').map(v=>parseInt(v));
+          if (numericValues.length>0){ bestValue = Math.min(...numericValues); worstValue = Math.max(...numericValues); }
+        } else {
+          bestValue = row.reverse ? Math.min(...values) : Math.max(...values);
+          worstValue = row.reverse ? Math.max(...values) : Math.min(...values);
+        }
+      }
+      Object.keys(strategies).forEach(strategy=>{
+        const td = document.createElement('td');
+        const val = row.getValue(comparisonData[strategy]);
+        td.textContent = val;
+        if (!row.custom && row.highlight){
+          const cmp = row.highlight==='yearTo100M' && val!=='Not reached' ? parseInt(val) : comparisonData[strategy][row.highlight];
+          if (cmp===bestValue || (row.highlight==='yearTo100M' && cmp===bestValue)){ td.className='positive'; td.style.fontWeight='bold'; }
+          else if (cmp===worstValue || (row.highlight==='yearTo100M' && val==='Not reached')){ td.className='negative'; }
+        } else if (row.custom){
+          if (val==='Low' || val==='Minimal') td.className='positive';
+          else if (val==='High' || val==='Significant') td.className='negative';
+          else td.className='neutral';
+        }
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+  }catch(e){ console.error('updateComparison error', e); }
+}
+
+function callUpdateComparison(){ if (typeof window.updateComparison==='function') window.updateComparison(); }
+
+function attachSliderListeners(){
+  document.querySelectorAll('input[type="range"]').forEach(slider=>{
+    slider.removeEventListener('input', handleSliderChange);
+    slider.addEventListener('input', handleSliderChange);
+  });
+  // Advanced inputs
+  ['adv-cost-bu','adv-cost-nonbu','adv-opex','adv-real-1','adv-real-2','adv-real-3'].forEach(id=>{
+    const el = document.getElementById(id);
+    if (el){
+      el.removeEventListener('input', updateBaseline);
+      el.addEventListener('input', updateBaseline);
+    }
+  });
+}
+
+function handleSliderChange(event){
+  const slider = event.target;
+  const valueSpan = document.getElementById(slider.id + '-val');
+  if (valueSpan){
+    if (slider.id.includes('-hours-') || slider.id.includes('-billable-') || slider.id==='base-hours' || slider.id==='base-billable'){
+      valueSpan.textContent = slider.value + '%';
+    } else {
+      valueSpan.textContent = slider.value.includes('.') ? slider.value : slider.value;
+      if (slider.id.startsWith('base-') && slider.id.includes('hourly')) valueSpan.textContent = slider.value;
+    }
+  }
+  if (slider.id.startsWith('base-')) updateBaseline(); else updateCharts();
+}
+
+// init
+Object.keys(strategies).forEach(strategy=>{ if (strategy!=='organic') initializeStrategy(strategy); });
+document.addEventListener('DOMContentLoaded', function(){
+  attachSliderListeners();
+  ['base-revenue','base-team','base-ebitda','base-billable','base-hours','base-hourly','base-nonbillable']
+    .forEach(id=>{ const el=document.getElementById(id); if(el){ el.addEventListener('input', updateBaseline); el.addEventListener('change', updateBaseline); } });
+  updateBaseline();
+  setTimeout(()=>{ Object.keys(strategies).forEach(s=>calculateMetrics(s)); updateCharts(); callUpdateComparison(); attachSliderListeners(); }, 200);
+});
+</script>
+</body>
+</html>
