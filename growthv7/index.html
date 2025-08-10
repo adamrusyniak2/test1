@@ -1,6 +1,76 @@
 
 <!DOCTYPE html>
 <html lang="pl">
+  <!-- === MOBILE PATCH (drop-in) === -->
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style id="responsive-mobile-patch">
+:root{
+  --gap: clamp(8px, 2vw, 16px);
+  --pad: clamp(8px, 2.2vw, 20px);
+  --radius: 16px;
+  --maxw: 1200px;
+}
+:where(.app, .container, main){
+  max-width: var(--maxw);
+  margin-inline: auto;
+  padding-inline: var(--pad);
+}
+:where(.card, .panel, section, .tile){
+  border-radius: var(--radius);
+  padding: var(--pad);
+  box-shadow: 0 1px 3px rgba(0,0,0,.06);
+}
+:where(.grid, .grid-2, .grid-3, .grid-4, .dashboard, .cards){
+  display: grid;
+  gap: var(--gap);
+}
+:where(.grid-2){ grid-template-columns: repeat(2, minmax(0,1fr)); }
+:where(.grid-3){ grid-template-columns: repeat(3, minmax(0,1fr)); }
+:where(.grid-4){ grid-template-columns: repeat(4, minmax(0,1fr)); }
+
+:where(.controls, .filters, .toolbar, form[role="search"]){
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0,1fr));
+  gap: var(--gap);
+  align-items: center;
+}
+:where(.controls > *, .filters > *, .toolbar > *){ min-width: 0; }
+:where(.controls .field, .filters .field){ grid-column: span 3; }
+:where(.controls .cta, .filters .cta){ grid-column: span 12; justify-self: end; }
+
+:where(.chart, canvas, svg, img){ max-width:100%; height:auto; }
+:where(.table-wrap){ overflow:auto; -webkit-overflow-scrolling: touch; }
+:where(.table-wrap table){ min-width: 720px; }
+
+:where(h1){ font-size: clamp(1.25rem, 2.5vw, 1.75rem); }
+:where(h2){ font-size: clamp(1.125rem, 2.2vw, 1.5rem); }
+:where(.header, header){ position: sticky; top: 0; z-index: 20; backdrop-filter: blur(6px); }
+
+/* --- Breakpoints (desktop bez zmian) --- */
+@media (max-width: 1200px){
+  :where(.grid-4){ grid-template-columns: repeat(3, minmax(0,1fr)); }
+}
+@media (max-width: 900px){
+  :where(.grid-3){ grid-template-columns: repeat(2, minmax(0,1fr)); }
+  :where(.grid-4){ grid-template-columns: repeat(2, minmax(0,1fr)); }
+  :where(.controls .field, .filters .field){ grid-column: span 4; }
+}
+@media (max-width: 680px){
+  :where(.grid, .grid-2, .grid-3, .grid-4, .dashboard, .cards){
+    grid-template-columns: 1fr;
+  }
+  :where(.toolbar){ grid-template-columns: 1fr; }
+  :where(.controls .field, .filters .field){ grid-column: span 12; }
+  :where(.controls .cta, .filters .cta){ justify-self: stretch; }
+  :where(.sidebar){ display:none; }
+  :where(.content){ width:100%; }
+}
+@media (max-width: 360px){
+  :where(body){ word-break: break-word; }
+}
+</style>
+<!-- === /MOBILE PATCH === -->
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
