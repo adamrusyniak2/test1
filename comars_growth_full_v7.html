@@ -1,0 +1,449 @@
+
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Clouds on Mars — Growth Studio (v7)</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
+  <style>
+    :root{
+      --bg:#0f0f0f; --card:#171717; --panel:#1f1f1f; --grid:#2a2a2a; --text:#e8e8e8; --muted:#a8a8a8;
+      --brand:#ff6b35; --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444; --vio:#8b5cf6; --blue:#60a5fa;
+    }
+    *{box-sizing:border-box} body{margin:0; padding:18px; background:var(--bg); color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;}
+    h1{color:var(--brand); margin:0 0 6px 0; font-size:28px} .subtitle{color:var(--muted); margin-bottom:16px}
+    .grid{display:grid; gap:16px} .cols-2{grid-template-columns:1fr 1fr} .cols-3{grid-template-columns:repeat(3,1fr)}
+    .card{background:var(--card); border:1px solid var(--grid); border-radius:14px; padding:14px;
+      box-shadow:0 8px 28px rgba(0,0,0,.35)}
+    .section-title{color:var(--brand); margin:0 0 10px 0}
+    label{font-size:12px; color:var(--muted)} input,select{width:100%; padding:8px; background:#202020; color:var(--text);
+      border:1px solid #333; border-radius:10px}
+    .row{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:8px}
+    .row3{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:8px}
+    .row4{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:8px}
+    .btn{background:var(--brand); color:#fff; border:none; padding:9px 12px; border-radius:10px; font-weight:700; cursor:pointer}
+    .btn.secondary{background:#2b2b2b; border:1px solid #3a3a3a} .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    canvas{height:360px !important} #trendChart{height:420px !important} .note{color:var(--muted); font-size:12px}
+
+    /* Recommendations UI */
+    #reco{display:grid; grid-template-columns:1fr; gap:12px}
+    .reco-card{background:var(--panel); border:1px solid #2b2b2b; border-radius:12px; padding:12px}
+    .reco-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:8px}
+    .badge{background:rgba(255,107,53,.12); color:var(--brand); border:1px solid rgba(255,107,53,.35);
+      padding:4px 8px; border-radius:999px; font-weight:800; font-size:12px; letter-spacing:.3px}
+    .reco-kpis{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:6px}
+    .k{background:#151515; border:1px solid #2a2a2a; border-radius:10px; padding:8px}
+    .k label{display:block; font-size:11px; color:#b4b4b4; margin-bottom:2px}
+    .k .v{font-size:16px; font-weight:800}
+    .gap{color:var(--warn)}
+    .divider{height:1px; background:#2a2a2a; margin:8px 0}
+    .hint{font-size:11px; color:#b8b8b8}
+  </style>
+</head>
+<body>
+  <h1>Clouds on Mars – Strategic Growth Studio</h1>
+  <div class="subtitle">Wersja v7: poprawiona logika rekomendacji (gradual util; rate 5–10% rocznie), czytelniejsze karty.</div>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h3 class="section-title">Wejścia (Y0 = 2025)</h3>
+      <div class="row">
+        <div><label>Revenue Y0 (PLN M)</label><input id="y0_rev" type="number" step="0.1" value="37"></div>
+        <div><label>EBITDA% (Y0, np. 0.15)</label><input id="y0_eb" type="number" step="0.01" value="0.15"></div>
+      </div>
+      <div class="row">
+        <div><label>Team HC (Y0 total)</label><input id="y0_hc" type="number" step="1" value="120"></div>
+        <div><label>% Delivery w HC (Y0)</label><input id="pct_delivery" type="number" step="0.01" value="0.75"></div>
+      </div>
+      <div class="row">
+        <div><label>Zablokuj Non-Delivery HC</label>
+          <select id="lock_non"><option value="1" selected>Tak</option><option value="0">Nie</option></select></div>
+        <div><label>Non-Delivery HC (gdy blokada)</label><input id="non_hc_fix" type="number" step="1" value="30"></div>
+      </div>
+      <div class="row3">
+        <div><label>Billable Hours % (Delivery, util)</label><input id="util" type="number" step="0.01" value="0.70"></div>
+        <div><label>Sales Rate (PLN/h)</label><input id="rate" type="number" step="1" value="310"></div>
+        <div><label>Annual Hours per FTE</label><input id="hours" type="number" step="1" value="2080"></div>
+      </div>
+      <div class="row3">
+        <div><label>Cost Rate Delivery (PLN/h)</label><input id="cost_del" type="number" step="1" value="140"></div>
+        <div><label>Cost Rate Non-Delivery (PLN/h)</label><input id="cost_non" type="number" step="1" value="100"></div>
+        <div><label>Min EBITDA % (np. 0.15)</label><input id="min_eb" type="number" step="0.01" value="0.15"></div>
+      </div>
+      <h3 class="section-title">Presales / upskill / inflacja</h3>
+      <div class="row3">
+        <div><label>Presales % (z godzin Delivery)</label><input id="presales" type="number" step="0.01" value="0.10"></div>
+        <div><label>Upskill %</label><input id="upskill" type="number" step="0.01" value="0.05"></div>
+        <div><label>Other %</label><input id="otherp" type="number" step="0.01" value="0.10"></div>
+      </div>
+      <div class="row4">
+        <div><label>ROI presales (Δrev per 1pp)</label><input id="roi" type="number" step="0.001" value="0.002"></div>
+        <div><label>Lag presales (część roku)</label><input id="lag" type="number" step="0.05" value="0.25"></div>
+        <div><label>Inflation (stawki sprzedaż.)</label><input id="infl" type="number" step="0.01" value="0.05"></div>
+        <div><label>Koszty: wzrost roczny</label><input id="cost_infl" type="number" step="0.01" value="0.05"></div>
+      </div>
+
+      <h3 class="section-title">Trend – kształt & EBITDA override</h3>
+      <div class="row3">
+        <div><label>Slope</label><input id="trend_slope" type="number" step="0.01" value="0.30"></div>
+        <div><label>Curvature</label><input id="trend_curve" type="number" step="0.01" value="0.10"></div>
+        <div><label>Auto-refresh</label>
+          <select id="autosync"><option value="1" selected>Tak</option><option value="0">Nie</option></select></div>
+      </div>
+      <div class="row3">
+        <div><label>EBITDA% Y1 (override)</label><input id="eb_y1" type="number" step="0.01" value="0.19"></div>
+        <div><label>EBITDA% Y2 (override)</label><input id="eb_y2" type="number" step="0.01" value="0.19"></div>
+        <div><label>EBITDA% Y3 (override)</label><input id="eb_y3" type="number" step="0.01" value="0.21"></div>
+      </div>
+      <div class="row">
+        <div><label>Użyj override EBITDA w trendzie</label>
+          <select id="use_eb_override"><option value="1" selected>Tak</option><option value="0">Nie</option></select></div>
+        <div></div>
+      </div>
+      <div class="row">
+        <button id="btn_recalc" class="btn">Recalculate / Refresh</button>
+        <button id="btn_defaults" class="btn secondary">Domyślne</button>
+      </div>
+      <div class="note">Sales Rate w rekomendacjach: min +5%/rok (infl), max +10%/rok. Util rośnie stopniowo; 75→80% bardzo trudne; hard cap 80%.</div>
+    </div>
+
+    <div class="card">
+      <h3 class="section-title">Trend 3-letni (Revenue & EBITDA%)</h3>
+      <canvas id="trendChart"></canvas>
+      <div class="grid cols-3" style="margin-top:8px">
+        <div><b>Y0:</b> <span class="mono" id="t_y0"></span></div>
+        <div><b>Y1:</b> <span class="mono" id="t_y1"></span></div>
+        <div><b>Y2:</b> <span class="mono" id="t_y2"></span></div>
+      </div>
+      <div><b>Y3:</b> <span class="mono" id="t_y3"></span></div>
+    </div>
+  </div>
+
+  <div class="grid cols-2" style="margin-top:16px">
+    <div class="card">
+      <h3 class="section-title">Heatmap (Revenue / EBITDA%) z izoliniami</h3>
+      <div class="row3">
+        <div><label>Delivery HC (dla mapy)</label><input id="hm_hc" type="number" step="1" value="90"></div>
+        <div><label>Metryka</label>
+          <select id="hm_metric"><option value="rev" selected>Revenue (PLN M)</option><option value="eb">EBITDA %</option></select></div>
+        <div><label>Zakres Rate</label>
+          <select id="hm_rate_range"><option value="260,380">260–380</option><option value="280,360">280–360</option><option value="300,340" selected>300–340</option><option value="310,330">310–330</option></select></div>
+      </div>
+      <div id="heatmapBox" style="height:520px"></div>
+      <div class="note">Wspólna skala kolorów dla wybranej metryki. Izolinie pokazują poziomy Revenue/EBITDA.</div>
+    </div>
+
+    <div class="card">
+      <h3 class="section-title">Rekomendacje (Y1–Y3) — zgodne z trendem</h3>
+      <div id="reco"></div>
+      <div class="note">Algorytm: minimalny gap do trendu przy EB≥min i niskim wysiłku (gradual util; rate 5–10%; HC ≤ 1.3^rok).</div>
+      <canvas id="kpiChart"></canvas>
+    </div>
+  </div>
+
+  <script>
+    const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+    const byId=id=>document.getElementById(id);
+    const fmtM=v=>(v||0).toLocaleString('pl-PL',{maximumFractionDigits:1});
+    const rgba=(hex,a)=>{var r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+                         return `rgba(${r},${g},${b},${a})`};
+
+    function readInputs(){
+      return {
+        y0_rev: +byId('y0_rev').value, y0_eb:+byId('y0_eb').value, y0_hc:+byId('y0_hc').value,
+        pct_delivery:+byId('pct_delivery').value, lock_non: byId('lock_non').value==='1',
+        non_hc_fix:+byId('non_hc_fix').value, util:+byId('util').value, rate:+byId('rate').value,
+        hours:+byId('hours').value, cost_del:+byId('cost_del').value, cost_non:+byId('cost_non').value,
+        min_eb:+byId('min_eb').value, presales:+byId('presales').value, upskill:+byId('upskill').value,
+        otherp:+byId('otherp').value, roi:+byId('roi').value, lag:+byId('lag').value, infl:+byId('infl').value,
+        cost_infl:+byId('cost_infl').value, slope:+byId('trend_slope').value, curve:+byId('trend_curve').value,
+        autosync:byId('autosync').value==='1', eb_y1:+byId('eb_y1').value, eb_y2:+byId('eb_y2').value,
+        eb_y3:+byId('eb_y3').value, use_eb_override:byId('use_eb_override').value==='1'
+      };
+    }
+    let calibK=1.0;
+    function computeCalibration(inp){
+      const delHC = Math.round(inp.y0_hc * inp.pct_delivery);
+      const nonClient = clamp(inp.presales + inp.upskill + inp.otherp, 0, 0.7);
+      const effUtil = clamp(inp.util * (1 - nonClient), 0, 0.80);
+      const revNoK = delHC * inp.hours * effUtil * inp.rate / 1e6;
+      calibK = revNoK>0 ? (inp.y0_rev / revNoK) : 1.0;
+    }
+    function inflatedCost(base, t, rate){ return base * Math.pow(1 + rate, t); }
+
+    function buildTrend(inp){
+      computeCalibration(inp);
+      const Y=[0,0,0,0]; const E=[0,0,0,0];
+      Y[0]=inp.y0_rev; E[0]=inp.y0_eb;
+      const delHC0=Math.round(inp.y0_hc*inp.pct_delivery);
+      const nonClient = clamp(inp.presales + inp.upskill + inp.otherp, 0, 0.7);
+      const effUtil = clamp(inp.util*(1-nonClient), 0, 0.80);
+      for(let t=1;t<=3;t++){
+        const factor = 1 + inp.slope*t + inp.curve*(t*(t-1)/2);
+        const upliftM = (calibK * delHC0 * inp.hours * effUtil * inp.rate * (inp.presales*100) * inp.roi * clamp(1-inp.lag,0,1)) / 1e6;
+        Y[t] = Math.max(0.1, inp.y0_rev * factor + upliftM);
+        if(inp.use_eb_override) E[t] = [null, inp.eb_y1, inp.eb_y2, inp.eb_y3][t];
+        else {
+          const cDelM = (delHC0 * inp.hours * inflatedCost(inp.cost_del,t,inp.cost_infl)) / 1e6;
+          const cNonM = ((inp.lock_non?inp.non_hc_fix:(inp.y0_hc-delHC0)) * inp.hours * inflatedCost(inp.cost_non,t,inp.cost_infl)) / 1e6;
+          const eM = Y[t] - (cDelM + cNonM);
+          E[t] = Y[t]>0 ? (eM / Y[t]) : 0;
+        }
+      }
+      return {Y,E};
+    }
+
+    // Unit economics
+    function computeRevEB(inp, yearIndex, params){
+      const nonClient = clamp(inp.presales + inp.upskill + inp.otherp, 0, 0.7);
+      const effUtil = clamp(params.util*(1-nonClient), 0, 0.80);
+      const revM = calibK * params.hc_del * inp.hours * effUtil * params.rate / 1e6;
+      const cDelM = (params.hc_del * inp.hours * inflatedCost(inp.cost_del, yearIndex, inp.cost_infl)) / 1e6;
+      const nonHC = inp.lock_non ? inp.non_hc_fix : Math.round(inp.y0_hc*(1-inp.pct_delivery));
+      const cNonM = (nonHC * inp.hours * inflatedCost(inp.cost_non, yearIndex, inp.cost_infl)) / 1e6;
+      const ebitdaM = revM - (cDelM + cNonM);
+      const ePct = revM>0 ? (ebitdaM / revM) : 0;
+      return {revM, ePct};
+    }
+
+    // Heatmap
+    function buildHeatmap(inp){
+      const hc = parseInt(byId('hm_hc').value);
+      const metric = byId('hm_metric').value;
+      const [rMin,rMax] = byId('hm_rate_range').value.split(',').map(parseFloat);
+      const utilVals=[]; for(let u=0.60; u<=0.80+1e-9; u+=0.0025) utilVals.push(+u.toFixed(4));
+      const rateVals=[]; for(let r=rMin; r<=rMax+1e-9; r+=1) rateVals.push(Math.round(r));
+      const Z = [];
+      for(let i=0;i<utilVals.length;i++){
+        const row=[];
+        for(let j=0;j<rateVals.length;j++){
+          const res = computeRevEB(inp, 0, {hc_del:hc, util:utilVals[i], rate:rateVals[j]});
+          row.push(metric==='rev' ? res.revM : (res.ePct*100));
+        }
+        Z.push(row);
+      }
+      const zTitle = metric==='rev' ? 'PLN M' : '%';
+      const data=[{
+        z: Z, x: rateVals, y: utilVals.map(v=>Math.round(v*100)),
+        type:'contour', colorscale:'YlOrRd', contours:{showlabels:true, labelfont:{color:'#111'}},
+        colorbar:{title:zTitle}
+      }];
+      const layout={margin:{l:40,r:10,t:10,b:40}, paper_bgcolor:'transparent', plot_bgcolor:'transparent',
+        xaxis:{title:'Sales Rate (PLN/h)', gridcolor:'rgba(255,255,255,.08)', color:'#ddd'},
+        yaxis:{title:'Utilization (%)', gridcolor:'rgba(255,255,255,.08)', color:'#ddd'}
+      };
+      Plotly.newPlot('heatmapBox', data, layout, {displayModeBar:false});
+    }
+
+    // Difficulty/effort
+    function effortUtil(u0,u1){
+      if(u1>0.80) return Infinity;
+      const du = u1 - u0;
+      if(du<=0) return 0.3*Math.abs(du)*100;
+      const smooth = 400 * (du*du); // kara za duże skoki w jednym roku
+      const nearCap = u1<=0.75 ? 0 : (2000*((u1-0.75)/0.05)**2);
+      return (du*100) + smooth + nearCap;
+    }
+    function effortRate(r0,r1){
+      if(r1<r0) return 5*((r0-r1)/r0)*100; // obniżka też "kosztuje" (ryzyko)
+      const change = (r1 - r0)/r0;
+      const minCh = 0.05; // min 5%
+      const maxCh = 0.10; // max 10%
+      if(change<minCh) return 1e4; // zbyt mało — nie spełnia polityki: duża kara
+      if(change>maxCh) return Infinity;
+      if(change<=0.05) return 50*change*100; // praktycznie nie użyte (==0.05)
+      if(change<=0.10) return 200*change*100; // 5–10%: akceptowalne, ale kosztowne
+      return Infinity;
+    }
+    function capHC(y0hc, t){ return Math.floor(y0hc * Math.pow(1.3, t)); }
+
+    // Recommendations
+    function recommend(inp, trend){
+      const res=[];
+      const y0_del = Math.round(inp.y0_hc*inp.pct_delivery);
+      let prev = {hc_del: y0_del, util: inp.util, rate: inp.rate};
+      for(let t=1;t<=3;t++){
+        const targetRev = trend.Y[t];
+        const maxHC = capHC(inp.y0_hc, t);
+        const hcCandidates=[];
+        const hcMin = Math.max(10, prev.hc_del - 10);
+        for(let h=hcMin; h<=maxHC; h+=2) hcCandidates.push(h);
+
+        const utilCandidates=[];
+        // pozwól rosnąć maks +3pp rocznie miękko (krokowa siatka)
+        const uMin = Math.max(0.65, prev.util - 0.02);
+        const uMax = Math.min(0.80, prev.util + 0.03);
+        for(let u=uMin; u<=uMax+1e-9; u+=0.0025) utilCandidates.push(+u.toFixed(4));
+
+        const rateCandidates=[];
+        const r0 = prev.rate;
+        const rMin = Math.round(r0 * 1.05); // min +5%
+        const rMax = Math.round(r0 * 1.10); // max +10%
+        for(let r=rMin; r<=rMax; r+=1) rateCandidates.push(r);
+
+        let best=null;
+        for(const hc of hcCandidates){
+          for(const u of utilCandidates){
+            for(const r of rateCandidates){
+              const {revM, ePct} = computeRevEB(inp, t, {hc_del:hc, util:u, rate:r});
+              if(ePct < inp.min_eb) continue;
+              const gap = Math.abs(revM - targetRev);
+              const e = effortUtil(prev.util,u) + effortRate(prev.rate,r) + Math.max(0, (hc - prev.hc_del)/6);
+              const score = gap*10 + e;
+              if(!best || score<best.score){
+                best = {t,hc, u, r, revM, ePct, score, gap};
+              }
+            }
+          }
+        }
+        // fallback jeśli nic nie spełni min EBITDA i/lub polityki rate
+        if(!best){
+          let fb=null;
+          for(const hc of hcCandidates){
+            for(const u of utilCandidates){
+              for(const r of rateCandidates){
+                const {revM, ePct} = computeRevEB(inp, t, {hc_del:hc, util:u, rate:r});
+                const gap = Math.abs(revM - targetRev);
+                const e = effortUtil(prev.util,u) + effortRate(prev.rate,r) + Math.max(0, (hc - prev.hc_del)/6) + (ePct<inp.min_eb? 5e3:0);
+                const score = gap*10 + e;
+                if(!fb || score<fb.score){
+                  fb = {t,hc,u,r,revM,ePct,score,gap};
+                }
+              }
+            }
+          }
+          best = fb;
+        }
+        res.push(best);
+        prev = {hc_del:best.hc, util:best.u, rate:best.r};
+      }
+      return res;
+    }
+
+    // Charts
+    let trendChart=null, kpiChart=null;
+    function drawTrend(tr){
+      const ctx = byId('trendChart').getContext('2d');
+      if(trendChart) trendChart.destroy();
+      trendChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['Y0','Y1','Y2','Y3'],
+          datasets: [
+            {label:'Revenue (PLN M)', data: tr.Y, borderColor:'#ff6b35', backgroundColor: rgba('#ff6b35', .2),
+             tension:.3, yAxisID:'y'},
+            {label:'EBITDA %', data: tr.E.map(e=>e*100), borderColor:'#22c55e', tension:.3, yAxisID:'y1'}
+          ]
+        },
+        options:{
+          responsive:true, maintainAspectRatio:false,
+          scales:{
+            y:{beginAtZero:true, title:{display:true,text:'PLN M'}, grid:{color:'rgba(255,255,255,.08)'}},
+            y1:{beginAtZero:false, min:0, max:40, position:'right', title:{display:true, text:'%'}, grid:{display:false}}
+          },
+          plugins:{legend:{labels:{color:'#ddd'}}}
+        }
+      });
+      byId('t_y0').textContent=fmtM(tr.Y[0]);
+      byId('t_y1').textContent=fmtM(tr.Y[1]);
+      byId('t_y2').textContent=fmtM(tr.Y[2]);
+      byId('t_y3').textContent=fmtM(tr.Y[3]);
+    }
+    function drawKPI(recos){
+      const labels=['Y1','Y2','Y3'];
+      const hc = recos.map(r=>r.hc);
+      const util = recos.map(r=>Math.round(r.u*1000)/10);
+      const rate = recos.map(r=>r.r);
+      const ctx = byId('kpiChart').getContext('2d');
+      if(kpiChart) kpiChart.destroy();
+      kpiChart = new Chart(ctx, {
+        type:'line',
+        data:{labels,
+          datasets:[
+            {label:'HC Delivery', data:hc, borderColor:'#60a5fa', backgroundColor:rgba('#60a5fa',.2), yAxisID:'y'},
+            {label:'Util %', data:util, borderColor:'#8b5cf6', yAxisID:'y1'},
+            {label:'Rate PLN/h', data:rate, borderColor:'#f59e0b', yAxisID:'y2'}
+          ]},
+        options:{responsive:true, maintainAspectRatio:false,
+          scales:{
+            y:{title:{display:true,text:'HC'}, grid:{color:'rgba(255,255,255,.08)'}},
+            y1:{position:'right', title:{display:true,text:'Util %'}, grid:{display:false}, min:65, max:82},
+            y2:{position:'right', title:{display:true,text:'Rate'}, grid:{display:false}, offset:true}
+          },
+          plugins:{legend:{labels:{color:'#ddd'}}}
+        }
+      });
+    }
+
+    function renderRecos(inp, recos){
+      const container=byId('reco');
+      container.innerHTML='';
+      const nonHC = inp.lock_non ? inp.non_hc_fix : Math.round(inp.y0_hc*(1-inp.pct_delivery));
+      recos.forEach((r,idx)=>{
+        const totalHC = r.hc + nonHC;
+        const y=idx+1;
+        const card=document.createElement('div');
+        card.className='reco-card';
+        card.innerHTML = `
+          <div class="reco-head">
+            <div class="badge">Y${y} — rekomendacja</div>
+            <div class="hint">dopasowanie do trendu, EB≥min</div>
+          </div>
+          <div class="reco-kpis">
+            <div class="k"><label>HC total (Delivery / Non)</label><div class="v">${totalHC} <span style="color:#a5b4fc">(${r.hc} / ${nonHC})</span></div></div>
+            <div class="k"><label>Util (client work)</label><div class="v">${(r.u*100).toFixed(1)}%</div></div>
+            <div class="k"><label>Sales Rate</label><div class="v">${r.r} PLN/h</div></div>
+          </div>
+          <div class="reco-kpis">
+            <div class="k"><label>Revenue</label><div class="v">${fmtM(r.revM)} M</div></div>
+            <div class="k"><label>EBITDA</label><div class="v">${(r.ePct*100).toFixed(1)}%</div></div>
+            <div class="k"><label>Δ do trendu</label><div class="v gap">${fmtM(r.gap)} M</div></div>
+          </div>
+          <div class="divider"></div>
+          <div class="hint">Polityka: rate +5–10%/rok; util max +3 pp/rok, twardy cap 80%; HC ≤ 1.3^rok.</div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function refreshAll(){
+      const inp=readInputs();
+      // calibrate
+      const delHC0 = Math.round(inp.y0_hc*inp.pct_delivery);
+      const nonClient = clamp(inp.presales + inp.upskill + inp.otherp, 0, 0.7);
+      const effUtil0 = clamp(inp.util*(1-nonClient), 0, 0.80);
+      calibK = (delHC0*inp.hours*effUtil0*inp.rate/1e6>0) ? (inp.y0_rev/(delHC0*inp.hours*effUtil0*inp.rate/1e6)) : 1.0;
+
+      const trend = buildTrend(inp);
+      drawTrend(trend);
+      buildHeatmap(inp);
+
+      const recos = recommend(inp, trend);
+      renderRecos(inp, recos);
+      drawKPI(recos);
+    }
+
+    // Events
+    byId('btn_recalc').addEventListener('click', refreshAll);
+    byId('btn_defaults').addEventListener('click', function(){
+      byId('y0_rev').value=37; byId('y0_eb').value=0.15; byId('y0_hc').value=120; byId('pct_delivery').value=0.75;
+      byId('lock_non').value='1'; byId('non_hc_fix').value=30; byId('util').value=0.70; byId('rate').value=310;
+      byId('hours').value=2080; byId('cost_del').value=140; byId('cost_non').value=100; byId('min_eb').value=0.15;
+      byId('presales').value=0.10; byId('upskill').value=0.05; byId('otherp').value=0.10; byId('roi').value=0.002;
+      byId('lag').value=0.25; byId('infl').value=0.05; byId('cost_infl').value=0.05;
+      byId('trend_slope').value=0.30; byId('trend_curve').value=0.10; byId('autosync').value='1';
+      byId('eb_y1').value=0.19; byId('eb_y2').value=0.19; byId('eb_y3').value=0.21; byId('use_eb_override').value='1';
+      byId('hm_hc').value=90; byId('hm_metric').value='rev'; byId('hm_rate_range').value='300,340';
+      refreshAll();
+    });
+    Array.from(document.querySelectorAll('input,select')).forEach(el=>{
+      el.addEventListener('change', ()=>{ if(readInputs().autosync) refreshAll(); });
+      el.addEventListener('input',  ()=>{ if(readInputs().autosync) refreshAll(); });
+    });
+    refreshAll();
+  </script>
+</body>
+</html>
