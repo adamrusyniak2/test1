@@ -1,0 +1,35 @@
+{
+  "name": "crm-analytics-dashboard",
+  "version": "1.0.0",
+  "description": "Professional CRM Analytics Dashboard for Clouds on Mars - Strategic Intelligence for Sales Pipeline Optimization",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve .",
+    "build": "echo 'No build step required - static HTML'",
+    "deploy": "echo 'Deploy to Azure Static Apps via GitHub Actions'"
+  },
+  "keywords": [
+    "crm",
+    "analytics",
+    "dashboard",
+    "sales",
+    "pipeline",
+    "business-intelligence",
+    "azure-static-apps",
+    "charts",
+    "responsive"
+  ],
+  "author": "Clouds on Mars",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/crm-analytics-dashboard.git"
+  },
+  "homepage": "https://your-dashboard.azurestaticapps.net",
+  "devDependencies": {
+    "serve": "^14.0.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
